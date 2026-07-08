@@ -32,8 +32,8 @@ valuation, probability-weighted scenarios, 2D sensitivity, post-earnings price-b
 validation with bounded calibration feedback, a clean PNG→Markdown→PDF report, a static
 GitHub Pages dashboard, and daily GitHub Actions automation.
 
-**Non-goals:** intraday/real-time trading signals; automated parsing of OCI figures out of
-press-release prose (kept human-curated by design); options/derivatives modeling; a
+**Non-goals:** intraday/real-time trading signals; brittle in-Actions regex scraping of OCI
+figures (gathered instead by an agent web-search pass, §3); options/derivatives modeling; a
 server-side web app (static site only).
 
 ## 3. Data strategy (hybrid)
@@ -54,10 +54,22 @@ only in press-release text.
 - `data/earnings_dates.py` — earnings/filing dates from SEC submissions JSON, with a
   curated fallback list.
 
-**Human-curated (`inputs/<quarter>.yaml`, ~15 fields from the earnings release):**
-OCI revenue (TTM + latest Q), OCI YoY growth, OCI operating margin (estimate), OCI FCF
-margin, CapEx (TTM) + CapEx growth, RPO + RPO growth, customer concentration (nullable),
-plus overrides for multiples, net debt, shares, and scenario/probability settings.
+**Search-gathered, agent-driven (`inputs/<quarter>.yaml`, ~15 fields from the earnings
+release):** OCI revenue (TTM + latest Q), OCI YoY growth, OCI operating margin (estimate),
+OCI FCF margin, CapEx (TTM) + CapEx growth, RPO + RPO growth, customer concentration
+(nullable), plus overrides for multiples, net debt, shares, and scenario/probability
+settings.
+
+These figures are **not typed by hand and not screen-scraped by a brittle parser**. When
+Oracle reports, an agent (Claude, in-session) runs a web-search pass: locate the official
+Oracle investor-relations press release + earnings call coverage, extract each figure,
+**cross-check every number against its source and flag conflicts**, and write the
+`inputs/<quarter>.yaml` with a `source:` URL and `confidence`/`estimated` flag per field.
+The human glances at the produced YAML and commits it — that commit triggers the on-push
+rerun (§9). Rationale: OCI figures live in prose whose wording/layout changes each quarter;
+an agent handles that robustly and surfaces disagreements, whereas a fixed regex silently
+grabs wrong numbers. This figure-gathering runs in a Claude session, **not** inside GitHub
+Actions; the daily price/multiple refresh remains fully automated in Actions.
 
 **Flagged data caveats (uncertainty is explicit):**
 - Oracle does **not** report OCI-only EBITDA. The `(1−α)` leg uses a modeled value:
@@ -171,6 +183,16 @@ price path.
 
 ## 12. First run
 
-Seed `inputs/` with Oracle's latest reported quarter + current CRWV/NBIS multiples so a live
-target price is produced immediately, with every estimated assumption (OCI margins, Q
-sub-scores, scenario deltas) clearly marked for correction.
+Agent web-search pass (§3) gathers Oracle's latest reported quarter's OCI figures and current
+CRWV/NBIS multiples into `inputs/<quarter>.yaml` with `source:` URLs, then the model produces
+a live target price immediately — every estimated assumption (OCI margins, Q sub-scores,
+scenario deltas) clearly marked for correction.
+
+## 13. Quarterly update loop
+
+Each time Oracle reports: (1) agent web-search pass writes the new `inputs/<quarter>.yaml`
+with sourced figures; (2) human glances + commits; (3) on-push workflow reruns the model and
+redeploys the dashboard; (4) the prior quarter's target is validated against the realized
+post-earnings daily boxes (§7), extending `validation_history.csv`; (5) optional `--calibrate`
+applies bounded feedback. Between reports, the daily Actions job keeps prices, peer multiples,
+and the event-study window current.
