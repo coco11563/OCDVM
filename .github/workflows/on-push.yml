@@ -6,6 +6,11 @@ on:
       - "config/**"
       - "ocdvm/**"
       - "report/**"
+      - "data/**"
+      - "scripts/**"
+      - "run.py"
+      - ".github/workflows/**"
+  workflow_dispatch:
 permissions:
   contents: read
   pages: write
