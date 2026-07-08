@@ -32,3 +32,15 @@ meta:
   retrieved: "2026-07-08"
   estimated: ["oci_op_margin", "oci_fcf_margin", "customer_concentration"]
   notes: "OCI revenue/growth/RPO/CapEx are reported; OCI-only profitability is modeled."
+  oci_history:            # OCI IaaS annual revenue ($M); FY2026 reported, FY2025 derived from +77%
+    "2025-05-31": 10226   # implied by FY2026 $18.1B / 1.77
+    "2026-05-31": 18100   # reported FY2026 IaaS
+  agent_note: >
+    July 2026 context: ORCL is ~58% off its Sept-2025 high and down ~28% YTD. The market is
+    not doubting OCI's demand — RPO of $638B is the largest booked backlog in enterprise
+    software — it is repricing the cost of delivering it: $55.7B annual CapEx, ~$98B net debt,
+    and OCI still cash-flow negative. Concentration is the swing risk (a handful of large AI
+    contracts, OpenAI-heavy), which is why the quality factor Q is held near neutral despite
+    Oracle's database moat. The thesis: today OCI is correctly a Neo-cloud (EV/Sales) asset;
+    the re-rating to hyperscaler pricing begins only when CapEx growth decelerates toward
+    revenue growth (CEI toward 1.0) and an OCI operating margin becomes visible.
