@@ -14,7 +14,9 @@ from report.plots import plot_sotp, plot_sensitivity, plot_scenarios, plot_alpha
 from report.evidence_plots import (plot_factor_breakdown, plot_peer_multiples,
                                    plot_fundamental_trends, plot_ev_reconciliation,
                                    plot_price_history)
-from report.commentary import build_commentary, commentary_markdown, commentary_html
+from report.commentary import (build_commentary, build_capacity_commentary,
+                               commentary_markdown, commentary_html)
+from report.capacity_plots import plot_capacity_path, plot_roic_heatmap, plot_cei_heatmap
 from report.dashboard import render_dashboard
 from report.build_report import build_markdown, to_pdf, html_to_pdf
 
@@ -75,7 +77,7 @@ def _load_peers():
     return []
 
 
-def _load_evidence(inputs_path: str) -> dict:
+def _load_evidence(inputs_path: str, cfg: dict) -> dict:
     """Gather corroborating data for the evidence plots. Each source is best-effort;
     a failure just omits that chart (network is not required to produce a report)."""
     import yaml
@@ -84,6 +86,8 @@ def _load_evidence(inputs_path: str) -> dict:
     meta = raw.get("meta", {}) or {}
     ev["oci_history"] = meta.get("oci_history")
     ev["agent_note"] = meta.get("agent_note")
+    if meta.get("capacity") and cfg.get("capacity"):
+        ev["capacity"] = _build_capacity(meta["capacity"], cfg["capacity"])
     try:
         from data.history import oracle_annual_series
         ev["series"] = oracle_annual_series()
@@ -95,6 +99,26 @@ def _load_evidence(inputs_path: str) -> dict:
     except Exception as e:  # noqa: BLE001
         print(f"[evidence] ORCL price history unavailable: {e}")
     return ev
+
+
+def _build_capacity(scn: dict, knobs: dict) -> dict:
+    """Combine the quarter scenario (capex/prior) with config knobs into a capacity result."""
+    from ocdvm.capacity import CapacityInputs, capacity_build, roic_grid, cei_grid
+    inp = CapacityInputs(
+        capex=scn["capex"], prior_capex=scn["prior_capex"], prior_oci_rev=scn["prior_oci_rev"],
+        build_cost_per_mw=knobs["build_cost_per_mw"], rev_per_mw=knobs["rev_per_mw"],
+        ramp_factor=knobs["ramp_factor"], utilization=knobs["utilization"],
+        contract_mix_haircut=knobs["contract_mix_haircut"], opex_per_mw=knobs["opex_per_mw"],
+        gpu_life_years=knobs["gpu_life_years"])
+    result = capacity_build(inp)
+    return {
+        "result": result, "knobs": knobs, "inp": inp,
+        "note_new_oci": scn.get("note_new_oci"), "prior_oci": scn["prior_oci_rev"], "fy": scn.get("fy"),
+        "roic_grid": roic_grid(knobs["build_cost_axis"], knobs["rev_per_mw_axis"],
+                               knobs["opex_per_mw"], knobs["gpu_life_years"]),
+        "cei_grid": cei_grid(knobs["build_cost_axis"], knobs["rev_per_mw_axis"], inp),
+        "cost_axis": knobs["build_cost_axis"], "rev_axis": knobs["rev_per_mw_axis"],
+    }
 
 
 def append_history(csv_path: str, row: dict) -> None:
@@ -133,7 +157,22 @@ def generate_outputs(result, outdir, evidence=None) -> dict:
         plots["price_history"] = plot_price_history(
             evidence["price_df"], result, os.path.join(outdir, "price_history.png"))
 
+    cap = evidence.get("capacity")
+    if cap:
+        plots["capacity_path"] = plot_capacity_path(
+            cap["result"], cap["note_new_oci"], cap["prior_oci"],
+            os.path.join(outdir, "capacity_path.png"))
+        plots["capacity_roic"] = plot_roic_heatmap(
+            cap["cost_axis"], cap["rev_axis"], cap["roic_grid"],
+            os.path.join(outdir, "capacity_roic.png"))
+        plots["capacity_cei"] = plot_cei_heatmap(
+            cap["cost_axis"], cap["rev_axis"], cap["cei_grid"],
+            os.path.join(outdir, "capacity_cei.png"))
+
     sections = build_commentary(result, evidence.get("agent_note"))
+    if cap:
+        sections = sections + build_capacity_commentary(
+            cap["result"], cap["knobs"], cap["note_new_oci"], cap["prior_oci"])
     paths = dict(plots)
     rel = {k: os.path.basename(v) for k, v in plots.items()}
     paths["markdown"] = build_markdown(result, rel, os.path.join(outdir, "report.md"),
@@ -175,7 +214,7 @@ def main(argv=None):
                    {"quarter": inp.quarter, "alpha": result["alpha"], "cei": result["cei"],
                     "regime": result["regime"], "m_neo": result["m_neo"], "q": result["q"],
                     "target": result["target"], "pw_price": result["pw_price"]})
-    paths = generate_outputs(result, outdir, evidence=_load_evidence(args.inputs))
+    paths = generate_outputs(result, outdir, evidence=_load_evidence(args.inputs, cfg))
     _publish_site(outdir, paths)
     print(json.dumps({"quarter": inp.quarter, "target": round(result["target"], 2),
                       "pw_price": round(result["pw_price"], 2),

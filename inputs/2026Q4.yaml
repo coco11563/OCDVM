@@ -35,6 +35,12 @@ meta:
   oci_history:            # OCI IaaS annual revenue ($M); FY2026 reported, FY2025 derived from +77%
     "2025-05-31": 10226   # implied by FY2026 $18.1B / 1.77
     "2026-05-31": 18100   # reported FY2026 IaaS
+  capacity:                 # forward MW-capacity cross-check scenario (Fitzsimmons FY2027)
+    fy: "FY2027"
+    capex: 110400           # implied FY27 capex = 2400MW x $46M/MW
+    prior_capex: 55663      # FY2026 actual
+    prior_oci_rev: 18100    # FY2026 OCI IaaS
+    note_new_oci: 23000     # Fitzsimmons headline new OCI (util=1, no haircut)
   agent_note: >
     July 2026 context: ORCL is ~58% off its Sept-2025 high and down ~28% YTD. The market is
     not doubting OCI's demand — RPO of $638B is the largest booked backlog in enterprise

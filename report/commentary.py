@@ -105,6 +105,41 @@ def build_commentary(result, agent_note=None) -> list:
     return sections
 
 
+def build_capacity_commentary(cap, knobs, note_new_oci, prior_oci) -> list:
+    """Interpretation of the bottom-up MW-capacity cross-check."""
+    from ocdvm.capacity import pretax_roic, breakeven_rev_per_mw
+    roic_hi = pretax_roic(knobs["rev_per_mw"], knobs["opex_per_mw"],
+                          knobs["build_cost_per_mw"], knobs["gpu_life_years"])
+    roic_lo = pretax_roic(6.0, knobs["opex_per_mw"], knobs["build_cost_per_mw"], knobs["gpu_life_years"])
+    be = breakeven_rev_per_mw(knobs["opex_per_mw"], knobs["build_cost_per_mw"], knobs["gpu_life_years"])
+    note_total = prior_oci + (note_new_oci or 0)
+    note_growth = (note_new_oci or 0) / prior_oci if prior_oci else 0
+    sections = []
+    sections.append({"h": "Bottom-up capacity cross-check", "p":
+        f"An independent MW-capacity build (CapEx ÷ ${knobs['build_cost_per_mw']:.0f}M per MW × "
+        f"${knobs['rev_per_mw']:.1f}M revenue per MW). At the note's optimistic assumptions "
+        f"(full utilization, no contract haircut), forward OCI is ~${note_total / 1000:.0f}B "
+        f"(+{note_growth * 100:.0f}%). At realistic delivery ({knobs['utilization'] * 100:.0f}% "
+        f"utilization, {knobs['contract_mix_haircut'] * 100:.0f}% prepaid/customer-supplied "
+        f"haircut), the model gives ${cap.projected_oci_total / 1000:.0f}B "
+        f"(+{cap.oci_growth * 100:.0f}%) — the headline needs near-flawless execution."})
+    sections.append({"h": "The regime-change test (CEI)", "p":
+        f"CapEx grows ~{cap.capex_growth * 100:.0f}% while OCI revenue grows "
+        f"{cap.oci_growth * 100:.0f}%, giving a projected CEI of {cap.projected_cei:.2f} "
+        f"(vs 0.47 today). Only if revenue actually out-grows CapEx does CEI cross 1.0 and "
+        f"trigger the migration from Neo-cloud to Hyperscaler pricing (α falling). Because "
+        f"depreciation starts at fit-out but revenue only at delivery, any slippage lands the "
+        f"CapEx denominator on time while the revenue numerator lags — structurally pinning "
+        f"CEI below 1 and keeping OCI in the Neo regime."})
+    sections.append({"h": "Unit economics are the swing factor", "p":
+        f"Pre-tax ROIC per billed MW is ~{roic_hi * 100:.0f}% at ${knobs['rev_per_mw']:.1f}M/MW "
+        f"but ~{roic_lo * 100:.0f}% at $6M/MW (CoreWeave-like), with break-even at "
+        f"${be:.1f}M/MW. So the whole 'healthy build' case rests on a revenue-per-MW roughly "
+        f"2× what the cleanest public comp earns. Revenue upside does NOT get multiplied by the "
+        f"trailing EV/Sales multiple; it matters for α's migration speed, not the target price."})
+    return sections
+
+
 def commentary_markdown(sections) -> str:
     return "\n\n".join(f"### {s['h']}\n\n{s['p']}" for s in sections)
 

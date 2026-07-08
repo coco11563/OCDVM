@@ -34,3 +34,16 @@ calibration:
   min_quarters: 3
   m_neo_hard_min: 5.0
   m_neo_hard_max: 20.0
+# Bottom-up MW-capacity cross-check knobs (Fitzsimmons-style). Defaults are the RIGOROUS
+# case (real opex, 5.5yr GPU life, delivery haircut) — set to the note's own optimistic
+# values (opex 0, life 6.1, util 1, haircut 0) to reproduce his headline.
+capacity:
+  build_cost_per_mw: 46.0        # $M/MW full-stack incl. GPUs (note); comps ~35-40
+  rev_per_mw: 13.5               # $M/billed MW/yr (note); CoreWeave actual ~6-7
+  ramp_factor: 0.71              # weighted fraction of full run-rate captured in year 1
+  utilization: 0.90             # energized+contracted fraction of installed MW
+  contract_mix_haircut: 0.20    # share on prepaid/customer-supplied GPU (no owner-operator rev)
+  opex_per_mw: 2.5              # $M/MW/yr power+operations (0 reproduces the note's ROIC)
+  gpu_life_years: 5.5           # depreciation life (6.1 reproduces the note's ROIC)
+  build_cost_axis: [35.0, 40.0, 46.0, 50.0]
+  rev_per_mw_axis: [6.0, 8.0, 10.0, 13.5]
