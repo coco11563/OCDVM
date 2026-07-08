@@ -1,6 +1,7 @@
 [
-  {"ticker": "CRWV", "revenue_ttm": 5000.0, "shares": 480.0, "net_debt": 8000.0,
-   "note": "PLACEHOLDER — replace revenue_ttm/shares/net_debt with agent-searched CoreWeave figures ($M, M shares)"},
-  {"ticker": "NBIS", "revenue_ttm": 1200.0, "shares": 230.0, "net_debt": 0.0,
-   "note": "PLACEHOLDER — replace with agent-searched Nebius figures"}
+  {"ticker": "CRWV", "revenue_ttm": 6230.0, "shares": 552.0, "price": 85.48, "net_debt": 10000.0,
+   "source": "agent-search 2026-07-07: mkt cap ~$47.2B @ $85.48; FY25 rev $5.13B + Q1'26 $2.08B TTM ~$6.2B; net debt est ~$10B",
+   "estimated": ["net_debt"]},
+  {"ticker": "NBIS", "revenue_ttm": 530.0, "shares": 309.0, "price": 209.47, "net_debt": -866.0,
+   "source": "agent-search 2026-07-07: TTM rev $529.8M; 309M sh; net cash ~$866M (cash $9.3B vs LT debt $8.43B) @ $209.47"}
 ]

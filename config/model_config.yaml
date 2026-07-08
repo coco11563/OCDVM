@@ -14,7 +14,10 @@ quality:
   center: 1.0
   span: 0.20
   weights: {revenue_quality: 0.3, diversification: 0.3, balance_sheet: 0.2, ecosystem: 0.2}
-  subscores: {revenue_quality: 0.75, diversification: 0.70, balance_sheet: 0.80, ecosystem: 0.90}
+  # Oracle-OCI quality vs pure neo-clouds (0-1, judgment calls; edit as the thesis evolves):
+  #   revenue_quality high (enterprise + prepaid AI contracts); diversification low (OpenAI-heavy);
+  #   balance_sheet stretched (net debt ~$98B, rising); ecosystem very high (database franchise).
+  subscores: {revenue_quality: 0.80, diversification: 0.45, balance_sheet: 0.55, ecosystem: 0.95}
 defaults:
   m_software: 13.0
   m_cloud: 20.0

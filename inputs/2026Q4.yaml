@@ -1,0 +1,34 @@
+quarter: "2026Q4"
+
+# --- OCI (agent-searched from Oracle Q4 FY2026 press release, reported 2026-06-10) ---
+rev_oci_ttm: 18100.0      # FY2026 Cloud Infrastructure (IaaS) revenue, +77% YoY
+rev_oci_q: 5800.0         # Q4 FY2026 IaaS revenue, +93% YoY
+oci_rev_growth: 0.77      # FY (TTM) YoY; quarterly run-rate growth was 93%
+
+# --- OCI profitability: MODELED, not reported by Oracle (flagged in meta.estimated) ---
+oci_op_margin: 0.12       # assumption: thin OCI operating margin under heavy depreciation
+oci_fcf_margin: -1.00     # assumption: deeply negative; CapEx >> OCI revenue during buildout
+
+# --- CapEx & RPO (SEC EDGAR XBRL, FY2026 10-K, end 2026-05-31) ---
+capex_ttm: 55663.0        # PaymentsToAcquirePropertyPlantAndEquipment FY2026
+capex_growth: 1.6238      # 55663 / 21215 (FY2025) - 1
+rpo: 638000.0             # RevenueRemainingPerformanceObligation, +363% YoY
+rpo_growth: 3.6285        # 638000 / 137800 (FY2025) - 1
+customer_concentration: 0.60   # estimate: RPO dominated by large AI contracts (OpenAI-heavy)
+
+# --- Oracle totals (SEC EDGAR XBRL, FY2026 10-K) ---
+total_ebitda: 29900.0     # OperatingIncomeLoss 20606 + Depreciation 7623 + AmortIntangibles 1671
+net_debt: 98252.0         # DebtLongtermAndShorttermCombined 129541 - Cash 31289
+shares: 2914.0            # WeightedAverageNumberOfDilutedSharesOutstanding FY2026
+current_price: 143.23     # ORCL close ~2026-07-07
+
+# --- Multiples (config defaults; edit vs SAP/IBM and hyperscaler comps) ---
+m_software: 13.0
+m_cloud: 20.0
+
+meta:
+  source: "https://www.oracle.com/news/announcement/q4fy26-earnings-release-2026-06-10/"
+  sec_facts: "https://data.sec.gov/api/xbrl/companyfacts/CIK0001341439.json"
+  retrieved: "2026-07-08"
+  estimated: ["oci_op_margin", "oci_fcf_margin", "customer_concentration"]
+  notes: "OCI revenue/growth/RPO/CapEx are reported; OCI-only profitability is modeled."

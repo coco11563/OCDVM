@@ -1,9 +1,13 @@
-"""Daily/on-demand data refresh: pull Oracle financials, peer prices, earnings dates,
-then rerun the model on the newest inputs/*.yaml and regenerate site/.
+"""Daily/on-demand data refresh.
 
-Peer revenue/shares/net_debt come from config/peers_seed.json (agent-maintained);
-peer *price* is fetched live from Stooq. Oracle totals and earnings dates come from
-SEC EDGAR. Network failures are logged and skipped, never fatal.
+- Oracle totals + earnings dates: SEC EDGAR (reliable, keyless).
+- Peers: built from config/peers_seed.json (agent-searched price/revenue/shares/net_debt
+  are the source of truth). A live price refresh via Yahoo is attempted and, when it
+  succeeds, overwrites the seed price; when it fails (throttled IP), the committed seed
+  price is used. This is cache + optional refresh, not a fallback tower.
+- Then reruns the model on the newest inputs/*.yaml and regenerates site/.
+
+All network failures are logged and non-fatal.
 """
 import glob
 import json
@@ -12,22 +16,25 @@ import subprocess
 import sys
 
 from data.fetch_oracle import fetch_oracle
-from data.fetch_peers import build_peer
+from data.fetch_prices import fetch_prices
 from data.earnings_dates import fetch_earnings_dates
 
 PEERS_SEED = "config/peers_seed.json"
 
 
 def refresh_peers(seed_path=PEERS_SEED) -> list:
-    peers = []
     seeds = json.load(open(seed_path)) if os.path.exists(seed_path) else []
+    peers = []
     for s in seeds:
+        price = s["price"]
         try:
-            p = build_peer(s["ticker"], s["revenue_ttm"], s["shares"], s.get("net_debt", 0.0))
-            peers.append({"ticker": p.ticker, "revenue_ttm": p.revenue_ttm,
-                          "price": p.price, "shares": p.shares, "net_debt": p.net_debt})
+            price = float(fetch_prices(s["ticker"])["close"].iloc[-1])
+            print(f"[refresh] {s['ticker']} live price {price}")
         except Exception as e:  # noqa: BLE001
-            print(f"[refresh] peer {s['ticker']} price fetch failed: {e}", file=sys.stderr)
+            print(f"[refresh] {s['ticker']} live price unavailable ({e}); using seed {price}",
+                  file=sys.stderr)
+        peers.append({"ticker": s["ticker"], "revenue_ttm": s["revenue_ttm"],
+                      "price": price, "shares": s["shares"], "net_debt": s.get("net_debt", 0.0)})
     return peers
 
 
@@ -36,7 +43,8 @@ def main():
     try:
         fin = fetch_oracle()
         json.dump(fin.__dict__, open("data/raw/oracle.json", "w"), indent=2)
-        print("[refresh] oracle financials ok:", fin.total_revenue_ttm, "M revenue TTM")
+        print(f"[refresh] oracle ok: revenue {fin.total_revenue_ttm:,.0f}M, "
+              f"capex {fin.capex_ttm:,.0f}M, rpo {fin.rpo:,.0f}M")
     except Exception as e:  # noqa: BLE001
         print(f"[refresh] oracle fetch failed: {e}", file=sys.stderr)
 

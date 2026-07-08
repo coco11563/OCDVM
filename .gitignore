@@ -1,8 +1,8 @@
 .venv/
-outputs/
-data/raw/
 __pycache__/
 *.pyc
-site/*.png
-site/index.html
 *.egg-info/
+data/raw/
+outputs/*/
+site/
+# keep the accumulating history CSVs (outputs/*.csv) tracked — the daily cron commits them
