@@ -43,6 +43,22 @@ def assemble_result(inp, cfg, peers, subscores) -> dict:
     }
 
 
+def _load_peers():
+    """Prefer the live-refreshed cache (data/raw/peers.json); otherwise build peers from
+    the committed seed (config/peers_seed.json), which carries agent-searched prices."""
+    cache = "data/raw/peers.json"
+    if os.path.exists(cache):
+        return [Peer(ticker=p["ticker"], revenue_ttm=p["revenue_ttm"], price=p["price"],
+                     shares=p["shares"], net_debt=p.get("net_debt", 0.0))
+                for p in json.load(open(cache))]
+    seed = "config/peers_seed.json"
+    if os.path.exists(seed):
+        return [Peer(ticker=s["ticker"], revenue_ttm=s["revenue_ttm"], price=s["price"],
+                     shares=s["shares"], net_debt=s.get("net_debt", 0.0))
+                for s in json.load(open(seed))]
+    return []
+
+
 def append_history(csv_path: str, row: dict) -> None:
     os.makedirs(os.path.dirname(csv_path) or ".", exist_ok=True)
     exists = os.path.exists(csv_path)
@@ -85,8 +101,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     cfg = load_config(args.config)
     inp = load_inputs(args.inputs)
-    peers_path = "data/raw/peers.json"
-    peers = [Peer(**p) for p in json.load(open(peers_path))] if os.path.exists(peers_path) else []
+    peers = _load_peers()
     result = assemble_result(inp, cfg, peers, cfg["quality"]["subscores"])
     outdir = os.path.join(args.outdir, inp.quarter)
     os.makedirs(outdir, exist_ok=True)
