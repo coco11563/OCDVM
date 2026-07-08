@@ -1,0 +1,6 @@
+[
+  {"ticker": "CRWV", "revenue_ttm": 5000.0, "shares": 480.0, "net_debt": 8000.0,
+   "note": "PLACEHOLDER — replace revenue_ttm/shares/net_debt with agent-searched CoreWeave figures ($M, M shares)"},
+  {"ticker": "NBIS", "revenue_ttm": 1200.0, "shares": 230.0, "net_debt": 0.0,
+   "note": "PLACEHOLDER — replace with agent-searched Nebius figures"}
+]
