@@ -1,0 +1,33 @@
+factors:
+  anchors:
+    oci_rev_growth:         {lo: 0.20, hi: 1.00, weight: 0.20}
+    capex_growth:           {lo: 0.10, hi: 1.20, weight: 0.15}
+    capex_to_revenue:       {lo: 0.15, hi: 0.90, weight: 0.15}
+    oci_op_margin:          {lo: 0.40, hi: 0.00, weight: 0.20}
+    oci_fcf_margin:         {lo: 0.30, hi: -0.40, weight: 0.15}
+    rpo_growth:             {lo: 0.15, hi: 0.80, weight: 0.10}
+    customer_concentration: {lo: 0.10, hi: 0.70, weight: 0.05}
+  cei_bands: {neo_below: 0.9, hyper_above: 1.1}
+quality:
+  q_min: 0.85
+  q_max: 1.20
+  center: 1.0
+  span: 0.20
+  weights: {revenue_quality: 0.3, diversification: 0.3, balance_sheet: 0.2, ecosystem: 0.2}
+  subscores: {revenue_quality: 0.75, diversification: 0.70, balance_sheet: 0.80, ecosystem: 0.90}
+defaults:
+  m_software: 13.0
+  m_cloud: 20.0
+scenarios:
+  Bear: {prob: 0.25, growth_mult: 0.80, m_neo_delta: -3.0, alpha_delta: -0.10}
+  Base: {prob: 0.50, growth_mult: 1.00, m_neo_delta:  0.0, alpha_delta:  0.00}
+  Bull: {prob: 0.25, growth_mult: 1.20, m_neo_delta:  3.0, alpha_delta:  0.10}
+sensitivity:
+  growth_axis: [0.6, 0.8, 1.0, 1.2, 1.4]   # multipliers on OCI revenue
+  mneo_axis:   [8.0, 10.0, 12.0, 14.0]
+calibration:
+  ewma_lambda: 0.5
+  max_step_pct: 0.10
+  min_quarters: 3
+  m_neo_hard_min: 5.0
+  m_neo_hard_max: 20.0
