@@ -1,0 +1,6 @@
+outputs/
+data/raw/
+__pycache__/
+*.pyc
+.venv/
+site/assets/*.png
